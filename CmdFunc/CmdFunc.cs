@@ -2,7 +2,6 @@
 using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 
 namespace Groophy
@@ -10,7 +9,7 @@ namespace Groophy
     public class CmdFunc
     {
         private Process Shell;
-        private ShellType Shell_Type;
+        private Structes.ShellType Shell_Type;
         static bool DEBUG;
         static Dictionary<string, string> KeyFilteredVarriables = new Dictionary<string, string>();
 
@@ -25,6 +24,7 @@ namespace Groophy
                 KeyFilteredVarriables.Add(key, value);
             }
         }
+
         public struct Grp
         {
             public int ProcId;
@@ -41,12 +41,7 @@ namespace Groophy
             }
         }
 
-        private static string CopyChar(char chr, int len)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            for (int i = 0; i < len; i++) sb.Append(chr);
-            return sb.ToString();
-        }
+        
 
         /// <summary>
         /// std_out_limit < 0 -> best width value for output
@@ -62,122 +57,21 @@ namespace Groophy
 
             Grp[] grp = new Grp[] { grp_ };
 
-            Print(grp, std_out_limit);
+            Utils.Print(grp, std_out_limit);
         }
 
-        /// <summary>
-        /// std_out_limit < 0 -> best width value for output
-        /// </summary>
-        /// <param name="grp"></param>
-        /// <param name="std_out_limit"></param>
-        public static void Print(Grp[] grp, int std_out_limit = -1)
-        {
-            if (std_out_limit < 0)
-            {
-                std_out_limit = Console.WindowWidth - 64;
-            }
-
-            Console.WriteLine("/-i---|-ID--|-Err-|-MS--|-Stdio--------------|-vp--|-vname----|-stdout---" + CopyChar('-', std_out_limit - 10) + "\\");
-
-            for (int i = 0; i < grp.Length; i++)
-            {
-                Console.WriteLine("|" + subbysp(i.ToString(), 5, 5) +
-                    "|" + subbysp(grp[i].ProcId.ToString(), 5, 5) +
-                    "|" + subbysp(grp[i].IsError.ToString(), 5, 5) +
-                    "|" + subbysp(grp[i].Stopwatch.Elapsed.TotalMilliseconds.ToString(), 5, 5) +
-                    "|" + subbysp(grp[i].Std_Input.ToString(), 20, 20) +
-                    "|" + subbysp(grp[i].probability_of_having_a_set.ToString(), 5, 5) +
-                    "|" + subbysp(grp[i].probability_of_having_a_set_VARRIABLE_KEY.ToString(), 10, 10) +
-                    "|" + subbysp(grp[i].Std_Out.ToString().Replace("\n", ",").Replace("\r", ""), std_out_limit, std_out_limit) +
-                    "|");
-            }
-            Console.WriteLine("\\-----|-----|-----|-----|--------------------|-----|----------|" + CopyChar('-', std_out_limit) + "/");
-        }
-
-        private static string subbysp(string word, int len, int retlen)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            char[] crs = word.ToCharArray();
-
-            for (int i = 0; i < retlen; i++)
-            {
-                if (i < len)
-                {
-                    if (crs.Length > i)
-                    {
-                        sb.Append(crs[i]);
-                    }
-                    else
-                    {
-                        sb.Append(' ');
-                    }
-                }
-                else
-                {
-                    sb.Append(' ');
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        [DllImport("kernel32.dll")]
-        public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int mode);
-        [DllImport("kernel32.dll")]
-        public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out int mode);
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetStdHandle(int handle);
-
-        //https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-        [DllImport("user32.dll")]
-        static extern bool SetForegroundWindow(IntPtr hWnd);
-
-
-        const int PROCESS_WM_READ = 0x0010;
-
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
-
-        [DllImport("kernel32.dll")]
-        public static extern bool ReadProcessMemory(int hProcess,
-          int lpBaseAddress, byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesRead);
-
-        [DllImport("user32.dll")]
-        static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
-        const uint WM_KEYDOWN = 0x0100;
-
-        public const int STD_INPUT_HANDLE = -10;
-        public const int ENABLE_QUICK_EDIT_MODE = 0x40 | 0x80;
-        public const int DISABLE_QUICK_EDIT_MODE = 0x0080;
-        public const int CHECK_QUICK_EDIT = 0x0040;
-
-        public enum QuickEditMode
-        {
-            ENABLE_QUICK_EDIT_MODE = 0x40 | 0x80,
-            DISABLE_QUICK_EDIT = 0x0080
-        };
-
-        public enum ShellType
-        {
-            ChairmanandManagingDirector_CMD,
-            PowerShell_PS
-            //Picobat_PBat
-        };
+        
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="workingdir"></param>
         /// <param name="type"></param>
-        public CmdFunc(string workingdir, ShellType type, bool _Debug)
+        public CmdFunc(string workingdir, Structes.ShellType type, bool _Debug)
         {
             DEBUG = _Debug;
             Shell_Type = type;
-            if (type == ShellType.ChairmanandManagingDirector_CMD)
+            if (type == Structes.ShellType.ChairmanandManagingDirector_CMD)
             {
 
                 Shell = new Process();
@@ -187,6 +81,7 @@ namespace Groophy
                 si.RedirectStandardOutput = true;
                 si.RedirectStandardError = true;
                 si.UseShellExecute = false;
+                si.WindowStyle = ProcessWindowStyle.Normal;
                 si.CreateNoWindow = true;
                 //Control.CheckForIllegalCrossThreadCalls = false;
                 si.WorkingDirectory = workingdir;
@@ -199,7 +94,7 @@ namespace Groophy
 
                 Input("echo init");
             }
-            else if (type == ShellType.PowerShell_PS)
+            else if (type == Structes.ShellType.PowerShell_PS)
             {
 
                 Shell = new Process();
@@ -239,7 +134,7 @@ namespace Groophy
             }
             try
             {
-                if (Shell_Type == ShellType.ChairmanandManagingDirector_CMD)
+                if (Shell_Type == Structes.ShellType.ChairmanandManagingDirector_CMD)
                 {
                     if (e.Data.Split(new[] { "@echo " }, StringSplitOptions.None)[1] == "End-Flag-ID-Null")
                     {
@@ -247,7 +142,7 @@ namespace Groophy
                         return;
                     }
                 }
-                else if (Shell_Type == ShellType.PowerShell_PS)
+                else if (Shell_Type == Structes.ShellType.PowerShell_PS)
                 {
                     if (e.Data.Split(new[] { "echo " }, StringSplitOptions.None)[1] == "End-Flag-ID-Null")
                     {
@@ -260,14 +155,14 @@ namespace Groophy
 
             try
             {
-                if (Shell_Type == ShellType.ChairmanandManagingDirector_CMD)
+                if (Shell_Type == Structes.ShellType.ChairmanandManagingDirector_CMD)
                 {
                     int spt = e.Data.IndexOf(">");
                     string nv = e.Data.Substring(spt + 1);
                     if (string.Equals(nv, mtn.Std_Input)) return;
                     if (e.Data.Substring(0, 16) == "End-Flag-ID-Null") return;
                 }
-                else if (Shell_Type == ShellType.PowerShell_PS)
+                else if (Shell_Type == Structes.ShellType.PowerShell_PS)
                 {
                     if (e.Data.StartsWith("PS C:") || e.Data.Substring(0, 16) == "End-Flag-ID-Null")
                     {
@@ -327,31 +222,31 @@ namespace Groophy
             return Input("set " + sla + varname + "=" + value + sla);
         }
 
-        public void SetQuickEdit(QuickEditMode _mode)
+        public void SetQuickEdit(Structes.QuickEditMode _mode)
         {
-            IntPtr handle = GetStdHandle(-10);
+            IntPtr handle = Structes.GetStdHandle(-10);
             int mode;
-            GetConsoleMode(handle, out mode);
-            bool flag = _mode == QuickEditMode.ENABLE_QUICK_EDIT_MODE;
+            Structes.GetConsoleMode(handle, out mode);
+            bool flag = _mode == Structes.QuickEditMode.ENABLE_QUICK_EDIT_MODE;
             if (flag)
             {
-                SetConsoleMode(handle, mode | 192);
+                Structes.SetConsoleMode(handle, mode | 192);
             }
             else
             {
-                bool flag2 = _mode == QuickEditMode.DISABLE_QUICK_EDIT;
+                bool flag2 = _mode == Structes.QuickEditMode.DISABLE_QUICK_EDIT;
                 if (flag2)
                 {
-                    SetConsoleMode(handle, mode &= -65);
+                    Structes.SetConsoleMode(handle, mode &= -65);
                 }
             }
         }
 
         public bool GetQuickEdit()
         {
-            IntPtr handle = GetStdHandle(-10);
+            IntPtr handle = Structes.GetStdHandle(-10);
             int mode;
-            GetConsoleMode(handle, out mode);
+            Structes.GetConsoleMode(handle, out mode);
             return mode == (mode | 192);
         }
 
@@ -396,11 +291,11 @@ namespace Groophy
 
         private string FindCulture()
         {
-            IntPtr processHandle = OpenProcess(PROCESS_WM_READ, false, Shell.Id);
+            IntPtr processHandle = Structes.OpenProcess(Structes.PROCESS_WM_READ, false, Shell.Id);
 
             int bytesRead = 0;
             byte[] buffer = new byte[10]; //'tr-TR' takes 5*2 bytes because of Unicode 
-            ReadProcessMemory((int)processHandle, 0x00A02930, buffer, buffer.Length, ref bytesRead);
+            Structes.ReadProcessMemory((int)processHandle, 0x00A02930, buffer, buffer.Length, ref bytesRead);
             return System.Text.Encoding.Unicode.GetString(buffer);
         }
 
@@ -453,8 +348,8 @@ namespace Groophy
 
                 if (parts[1].StartsWith("\"")) parts[1] = parts[1].Substring(1);
                 if (parts[1].EndsWith("\"")) parts[1] = parts[1].Substring(0, parts[1].Length-1);
-
-                if (getExtentionofFile(parts[1]).ToLower() != "bat" && File.Exists(parts[1]))
+                
+                if (getExtentionofFile(parts[1]).ToLower() == "bat" && File.Exists(parts[1]))
                 {
                     string[] lines = File.ReadAllLines(parts[1]);
 
@@ -579,8 +474,8 @@ namespace Groophy
 
             endflag = true;
             Shell.StandardInput.WriteLine(command);
-            if (Shell_Type == ShellType.ChairmanandManagingDirector_CMD) Shell.StandardInput.WriteLine("@echo End-Flag-ID-Null");
-            else if (Shell_Type == ShellType.PowerShell_PS) Shell.StandardInput.WriteLine("echo End-Flag-ID-Null");
+            if (Shell_Type == Structes.ShellType.ChairmanandManagingDirector_CMD) Shell.StandardInput.WriteLine("@echo End-Flag-ID-Null");
+            else if (Shell_Type == Structes.ShellType.PowerShell_PS) Shell.StandardInput.WriteLine("echo End-Flag-ID-Null");
 
             while (endflag) { }
 
@@ -607,18 +502,74 @@ namespace Groophy
             }
         }
 
-        public static Grp OneTimeInput(string script, ShellType type, string workingDir, bool _DEBUG = false)
+        private Grp SInput(string command, string inp) //not for users
+        {
+            log("new script => " + command);
+            pohas = false;
+            pohas_Key = string.Empty;
+            pohacf = false;
+            pohacf_Keys = new List<string>();
+            command = filter(command);
+            if (string.IsNullOrEmpty(command)) return new Grp() { IsError = false, ProcId = Shell.Id, Std_Input = "", Std_Out = new System.Text.StringBuilder(), Stopwatch = new Stopwatch() };
+
+            mtn.Std_Input = command;
+            mtn.Std_Out = new System.Text.StringBuilder();
+            mtn.IsError = false;
+            mtn.ProcId = Shell.Id;
+            mtn.Stopwatch = new Stopwatch();
+            mtn.probability_of_having_a_set = pohas;
+            mtn.probability_of_having_a_set_VARRIABLE_KEY = pohas_Key;
+            mtn.Stopwatch.Start();
+
+            endflag = true;
+            Console.WriteLine("0");
+            Shell.StandardInput.WriteLine(command);
+            Console.WriteLine("1");
+
+            Console.WriteLine("2");
+            Shell.StandardInput.WriteLine(inp);
+            Console.WriteLine("3");
+
+            if (Shell_Type == Structes.ShellType.ChairmanandManagingDirector_CMD) Shell.StandardInput.WriteLine("@echo End-Flag-ID-Null");
+            else if (Shell_Type == Structes.ShellType.PowerShell_PS) Shell.StandardInput.WriteLine("echo End-Flag-ID-Null");
+
+            while (endflag) { }
+
+            string[] lines = mtn.Std_Out.ToString().Split(new[] { "\r", "\n", "\r\n" }, StringSplitOptions.None);
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(lines[i]))
+                {
+                    sb.Append(lines[i] + Environment.NewLine);
+                }
+            }
+            endflag = false;
+
+            mtn.Stopwatch.Stop();
+
+            try
+            {
+                return mtn;
+            }
+            finally
+            {
+                mtn = default;
+            }
+        }
+
+        public static Grp OneTimeInput(string script, Structes.ShellType type, string workingDir, bool _DEBUG = false)
         {
             if (string.IsNullOrEmpty(workingDir)) workingDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             switch (type)
             {
-                case ShellType.ChairmanandManagingDirector_CMD:
+                case Structes.ShellType.ChairmanandManagingDirector_CMD:
 
-                    CmdFunc c = new CmdFunc(workingDir, ShellType.ChairmanandManagingDirector_CMD, _DEBUG);
+                    CmdFunc c = new CmdFunc(workingDir, Structes.ShellType.ChairmanandManagingDirector_CMD, _DEBUG);
                     return c.Input(script);
-                case ShellType.PowerShell_PS:
+                case Structes.ShellType.PowerShell_PS:
 
-                    CmdFunc p = new CmdFunc(workingDir, ShellType.PowerShell_PS, _DEBUG);
+                    CmdFunc p = new CmdFunc(workingDir, Structes.ShellType.PowerShell_PS, _DEBUG);
                     return p.Input(script);
                 default:
 

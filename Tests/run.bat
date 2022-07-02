@@ -1,3 +1,4 @@
+@echo off
 cd..
 cd cmdfunc
 dotnet build --configuration Release 
