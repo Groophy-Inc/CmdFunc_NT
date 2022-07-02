@@ -8,7 +8,7 @@ namespace Tests
         {
             Groophy.CmdFunc c = new Groophy.CmdFunc("C:\\", Groophy.CmdFunc.ShellType.ChairmanandManagingDirector_CMD, false);
 
-            c.Input("echo Hello World").Print();
+            c.Input("set a=b").Print();
         }
     }
 }
